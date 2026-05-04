@@ -1,6 +1,6 @@
-# 🐦 Flutter Development Setup — Fedora 43 + Windows 11 Emulator
+# 🐦 Flutter Dev Setup — Fedora 43 + Windows 11 Emulator
 
-> A complete guide to installing Flutter on **Fedora 43**, setting up the Android SDK manually (no Android Studio required), and connecting to an Android emulator running on a **Windows 11** host via VMware.
+> A complete guide to installing Flutter on **Fedora 43**, setting up the Android SDK manually (**no Android Studio required — on either OS**), and connecting to an Android emulator running on a **Windows 11** host via VMware.
 
 ---
 
@@ -14,6 +14,11 @@
 - [Step 5 — Finalize Android Setup](#step-5--finalize-android-setup)
 - [Step 6 — Verify Installation](#step-6--verify-installation)
 - [Windows 11: Run the Emulator & Connect via ADB](#windows-11-run-the-emulator--connect-via-adb)
+  - [Windows SDK Setup (No Android Studio)](#windows-sdk-setup-no-android-studio)
+    - [1. Download & Extract Command Line Tools](#1-download--extract-command-line-tools)
+    - [2. Configure Environment Variables](#2-configure-environment-variables)
+    - [3. Install SDK Components](#3-install-sdk-components)
+    - [4. Create and Start the Emulator](#4-create-and-start-the-emulator)
   - [VMware Network Setup](#vmware-network-setup)
   - [Windows Firewall Rule](#windows-firewall-rule)
   - [Connect ADB from Fedora](#connect-adb-from-fedora)
@@ -28,9 +33,9 @@
 
 | Requirement | Details |
 |---|---|
-| OS (Host) | Windows 11 with Android SDK installed & Emulator installed |
+| OS (Host) | Windows 11 — Android SDK + Emulator via CLI only (no Android Studio) |
 | OS (Guest) | Fedora 43 (Workstation) running in VMware Workstation |
-| Shell | `bash` (commands target `~/.bashrc` or `~/.zshrc` for `zsh`  ) |
+| Shell | `bash` (commands target `~/.bashrc`) |
 | Internet | Required for SDK downloads |
 
 ---
@@ -89,6 +94,18 @@ mv ~/Development/android/cmdline-tools/cmdline-tools \
    ~/Development/android/cmdline-tools/latest
 ```
 
+**4.** Directory structure after setup:
+```bash
+~/development/
+├── flutter/
+├── android/
+│   └── cmdline-tools/
+│       └── latest/
+│           ├── bin/
+│           ├── lib/
+│           └── ...
+```
+
 > The SDK manager **requires** this exact directory name to locate the SDK root correctly. Skipping this will cause tool lookup failures.
 
 ---
@@ -103,8 +120,6 @@ export PATH="$PATH:$HOME/Development/flutter/bin"
 
 # ── Android SDK ────────────────────────────────────────────
 export ANDROID_HOME="$HOME/Development/android"
-
-# ── Android TOOLS ────────────────────────────────────────────
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin"
 export PATH="$PATH:$ANDROID_HOME/platform-tools"
 export PATH="$PATH:$ANDROID_HOME/emulator"
@@ -171,8 +186,8 @@ flutter doctor --android-licenses
 
 Accept all prompts with `y`.
 
-### 5c. Link Flutter to Your SDK (optional just to make sure everything is correct!!)
-**- You can just go to step 6**
+### 5c. Link Flutter to Your SDK (optional, to make sure everything is correct!!)
+**- You can jump to step 6 **
 
 Point Flutter at your manually installed SDK:
 
@@ -203,9 +218,115 @@ A healthy output looks like:
 
 ## Windows 11: Run the Emulator & Connect via ADB
 
-This section covers connecting Flutter (on Fedora inside VMware) to an Android Emulator running on your Windows 11 **host machine**.
+This section covers **two parts**:
+1. Installing the Android SDK and creating an emulator on Windows **without Android Studio** — using only the Command Line Tools.
+2. Connecting that emulator to Flutter running on Fedora inside VMware.
+
+---
+
+### Windows SDK Setup (No Android Studio)
+
+Just like on Fedora, we'll install only the Command Line Tools and use `sdkmanager` directly. No IDE required.
+
+#### 1. Download & Extract Command Line Tools
+
+**1.** Visit the [Android Studio Downloads](https://developer.android.com/studio/install) page, scroll down to the **Command line tools only** section, and download the Windows `.zip` package.
+
+**2.** Create your SDK base directory:
+
+```
+C:\Android\
+```
+
+**3.** ⚠️ Critical — the tools require a specific nested folder structure. Create it manually:
+
+```
+C:\Android\cmdline-tools\latest\
+```
+
+**4.** Extract the downloaded `.zip`. Inside it you'll find a `cmdline-tools` folder containing `bin\`, `lib\`, etc. Move the **contents** of that inner folder directly into `C:\Android\cmdline-tools\latest\`.
+
+Your final structure should look like this:
+
+```
+C:\Android\
+└── cmdline-tools\
+    └── latest\
+        ├── bin\
+        │   ├── sdkmanager.bat
+        │   └── avdmanager.bat
+        └── lib\
+```
+
+> Skipping this step causes `sdkmanager` to fail with SDK root lookup errors — the same gotcha as on Linux.
+
+---
+
+#### 2. Configure Environment Variables
+
+**1.** Open **"Edit the system environment variables"** from the Windows Search bar.
+
+**2.** Click **Environment Variables**.
+
+**3.** Under **User variables**, click **New** and add:
+
+| Variable Name | Variable Value |
+|---|---|
+| `ANDROID_HOME` | `C:\Android` |
+
+**4.** Select the **Path** variable under User variables and click **Edit**. Add these three new entries:
+
+```
+%ANDROID_HOME%\cmdline-tools\latest\bin
+%ANDROID_HOME%\platform-tools
+%ANDROID_HOME%\emulator
+```
+
+**5.** Click OK on all dialogs, then open a **new** Command Prompt or PowerShell to pick up the changes.
+
+---
+
+#### 3. Install SDK Components
+
+In your new terminal, run:
+
+```powershell
+# Accept all SDK licenses first
+sdkmanager --licenses
+
+# Install required packages
+sdkmanager "platform-tools" "platforms;android-35" "emulator" "system-images;android-35;google_apis;x86_64"
+```
+
+> **Note:** Replace `android-35` with your preferred API level if needed. API 35 matches Android 15.
+
+---
+
+#### 4. Create and Start the Emulator
+
+**1.** Create a new AVD (Android Virtual Device):
+
+```powershell
+avdmanager create avd -n MyEmulator -k "system-images;android-35;google_apis;x86_64" --device "pixel_8"
+```
+
+When prompted *"Do you wish to create a custom hardware profile?"*, type `no` and press Enter.
+
+**2.** Start the emulator:
+
+```powershell
+emulator -avd MyEmulator
+```
+
+> **Performance tip:** For the best emulator performance, ensure:
+> - **Virtualization (VT-x/AMD-V)** is enabled in your BIOS.
+> - **Windows Hypervisor Platform** is enabled — search for *"Turn Windows features on or off"* and check it.
+
+---
 
 ### VMware Network Setup
+
+With the emulator running on Windows, configure VMware so Fedora can reach it over the network.
 
 **1.** Shut down the Fedora VM.
 
@@ -276,8 +397,8 @@ flutter devices
 
 **Resolution steps (in order):**
 
-```bash
-# 1. Stop the emulator in Android Studio first
+```powershell
+# 1. Stop the emulator first (close the emulator window or use: adb emu kill)
 
 # 2. Kill and restart the ADB server
 adb kill-server
@@ -298,7 +419,7 @@ adb devices
 
 **Make sure the emulator is listening on TCP (run in Windows):**
 
-```cmd
+```powershell
 adb tcpip 5555
 ```
 
