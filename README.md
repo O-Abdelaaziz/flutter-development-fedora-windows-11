@@ -1,8 +1,9 @@
 # 🐦 Flutter Dev Setup — Fedora 43 + Windows 11 Emulator
 
 > A complete guide to installing Flutter on **Fedora 43**, setting up the Android SDK manually (**no Android Studio required — on either OS**), and connecting to an Android emulator running on a **Windows 11** host via VMware.
-
-*Authored & instructed by **Ouakala Abdelaaziz***
+<div align="center">
+Authored & instructed by <b>Ouakala Abdelaaziz</b>
+</div>
 
 ---
 
