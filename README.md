@@ -2,6 +2,8 @@
 
 > A complete guide to installing Flutter on **Fedora 43**, setting up the Android SDK manually (**no Android Studio required — on either OS**), and connecting to an Android emulator running on a **Windows 11** host via VMware.
 
+*Authored & instructed by **Ouakala Abdelaaziz***
+
 ---
 
 ## Table of Contents
@@ -537,6 +539,12 @@ This resolves the `! Unable to access driver information using 'eglinfo'` warnin
 ---
 
 <div align="center">
+
+## 👨‍🏫 Instructor
+
+**Ouakala Abdelaaziz**
+> Feel free to reach out with questions or connect on [LinkedIn](https://www.linkedin.com/in/abdelaaziz-ouakala/) · [GitHub](https://github.com/O-Abdelaaziz/)
+> 
 
 Made with ☕ for the Fedora + Flutter community
 
